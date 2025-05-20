@@ -17,8 +17,8 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Install pylint
-        run: pip install pylint
+      - name: Install dependencies
+        run: pip install -r backend/requirements.txt
 
       - name: Run pylint in backend folder
         run: |
