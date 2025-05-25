@@ -1,13 +1,31 @@
-import {Socket} from "socket.io-client";
+import { useState } from "react";
+import { Socket } from "socket.io-client";
 import UserList from "../UserList/UserList.tsx";
+import {useStyles} from "./ChatView.styles.ts";
 
 function ChatView({ socket }: { socket: Socket }) {
+    const [isSideBarVisible, setIsSideBarVisible] = useState(false);
+    const styles = useStyles();
+
     return (
-        <div className="flex items center justify-center bg-pink-100 bg-opacity-30 w-screen h-screen">
-            <div className="flex bg-pink-400 h-screen w-1/3 justify-start flex-col pr-7 pl-7">
-                <UserList socket={socket}></UserList>
+        <div className={styles.mainScreen}>
+            <div
+                className={styles.sideBar}
+                onMouseEnter={() => setIsSideBarVisible(true)}
+                onMouseLeave={() => setIsSideBarVisible(false)}
+                style={{ cursor: "pointer" }}
+            ></div>
+            <div
+                onMouseEnter={() => setIsSideBarVisible(true)}
+                onMouseLeave={() => setIsSideBarVisible(false)}
+                className={`${styles.sideBarContainer} ${isSideBarVisible ? styles.animationStart : styles.animationEnd}
+        `}
+            >
+                <UserList socket={socket} />
             </div>
-            <div className="flex bg-pink-300 h-screen w-2/3"></div>
+
+            <div className={styles.chat}>
+            </div>
         </div>
     );
 }
