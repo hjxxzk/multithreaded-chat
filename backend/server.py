@@ -7,6 +7,14 @@ app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*")
 users = []
 
+@socketio.on("get_users")
+def get_users(data):
+    """Return users list."""
+    nickname = data.get("nickname")
+    users_without_nickname = [user for user in users if user != nickname]
+    print(f"Użytkownik {nickname} poprosił o listę użytkowników.")
+    emit('return_users', {'users': users_without_nickname})
+
 
 @socketio.on('set_nickname')
 def handle_user_join(data):

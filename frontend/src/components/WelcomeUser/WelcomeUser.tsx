@@ -2,11 +2,13 @@ import { useState, useEffect } from "react";
 import { Socket } from 'socket.io-client';
 import NicknamePopup from "../NicknamePopup/NicknamePopup.tsx";
 import {useStyles} from "./WelcomeUser.styles.ts";
+import {useNavigate} from "react-router-dom";
 
 function WelcomeUser({ socket }: { socket: Socket }) {
     const styles = useStyles();
-    const [nickname, setNickname] = useState('');
+    const navigate = useNavigate();
 
+    const [nickname, setNickname] = useState('');
     const [showPopup, setShowPopup] = useState(true);
     const [popupClosing, setPopupClosing] = useState(false);
 
@@ -29,6 +31,7 @@ function WelcomeUser({ socket }: { socket: Socket }) {
 
         socket.on('nickname_set', (data: { nickname: string }) => {
             console.log(`Nickname ustawiony: ${data.nickname}`);
+            localStorage.setItem("nickname", data.nickname);
             setNickname(data.nickname);
             welcomeUser();
         });
@@ -44,9 +47,15 @@ function WelcomeUser({ socket }: { socket: Socket }) {
         setTimeout(() => {
             setShowPopup(false);
             setShowWelcome(true);
-        }, 300);
+            goToChatView();
+        }, 500);
     }
 
+    function goToChatView() {
+        setTimeout(() => {
+            navigate('/chat');
+        }, 2500);
+    }
 
     useEffect(() => {
         if (showWelcome) {
