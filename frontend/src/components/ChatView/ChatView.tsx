@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Socket } from "socket.io-client";
-import UserList from "../UserList/UserList.tsx";
 import {useStyles} from "./ChatView.styles.ts";
+import UserList from "../UserList/UserList.tsx";
+import Chat from "../Chat/Chat.tsx";
+import type {SocketProps} from "../../App.types.ts";
 
-function ChatView({ socket }: { socket: Socket }) {
+function ChatView({socket} : SocketProps) {
     const [isSideBarVisible, setIsSideBarVisible] = useState(false);
     const styles = useStyles();
 
@@ -25,6 +26,7 @@ function ChatView({ socket }: { socket: Socket }) {
             </div>
 
             <div className={styles.chat}>
+                <Chat socket={socket}></Chat>
             </div>
         </div>
     );

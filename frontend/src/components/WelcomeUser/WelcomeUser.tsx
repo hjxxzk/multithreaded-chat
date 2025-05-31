@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
-import { Socket } from 'socket.io-client';
 import NicknamePopup from "../NicknamePopup/NicknamePopup.tsx";
 import {useStyles} from "./WelcomeUser.styles.ts";
 import {useNavigate} from "react-router-dom";
+import type {SocketProps} from "../../App.types.ts";
 
-function WelcomeUser({ socket }: { socket: Socket }) {
+
+function WelcomeUser({ socket }: SocketProps) {
     const styles = useStyles();
     const navigate = useNavigate();
 
-    const [nickname, setNickname] = useState('');
     const [showPopup, setShowPopup] = useState(true);
     const [popupClosing, setPopupClosing] = useState(false);
 
@@ -32,7 +32,6 @@ function WelcomeUser({ socket }: { socket: Socket }) {
         socket.on('nickname_set', (data: { nickname: string }) => {
             console.log(`Nickname ustawiony: ${data.nickname}`);
             localStorage.setItem("nickname", data.nickname);
-            setNickname(data.nickname);
             welcomeUser();
         });
 
@@ -80,7 +79,7 @@ function WelcomeUser({ socket }: { socket: Socket }) {
                 <div className={`${styles.nicknameConfirmation}
           ${welcomeClosing ? 'opacity-0' : 'opacity-100'}`}
                 >
-                    Twój nickname: {nickname}!
+                    Twój nickname: {localStorage.getItem("nickname")}!
                 </div>
             )}
 
