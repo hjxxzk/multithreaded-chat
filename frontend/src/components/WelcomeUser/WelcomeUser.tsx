@@ -52,7 +52,7 @@ function WelcomeUser({ socket }: SocketProps) {
 
     function goToChatView() {
         setTimeout(() => {
-            navigate('/chat');
+            navigate('/rooms');
         }, 2500);
     }
 

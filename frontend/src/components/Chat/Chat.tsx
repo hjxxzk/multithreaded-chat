@@ -1,58 +1,82 @@
-import {useEffect, useState} from "react";
+import {useEffect, useState, useRef} from "react";
 import {useStyles} from "./Chat.styles.tsx";
-import {Send} from 'lucide-react'
+import {Send, Heart} from 'lucide-react'
 import logo from '/src/assets/logo.png'
-import {useParams} from "react-router-dom";
 import type {SocketProps} from "../../App.types.ts";
 
-function Chat({socket} : SocketProps) {
+function Chat({socket}: SocketProps) {
     const styles = useStyles();
     const [message, setMessage] = useState("");
     const [chatHistory, setChatHistory] = useState<{ nickname: string, message: string }[]>([]);
-    const { threadName } = useParams();
     const nickname = localStorage.getItem("nickname");
-    const recipient = localStorage.getItem("recipient");
+    const roomIndex = localStorage.getItem("roomIndex");
+    const chatEndRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
-
-        socket.on("chat_started", (data) => {
-            setChatHistory(data.messages);
+        const handleNewMessage = (msg: { nickname: string, message: string }) => {
+            setChatHistory(prev => [...prev, msg]);
+            console.log(msg);
+        };
+        socket.on("chat_history", (data: { history: { nickname: string; message: string }[] }) => {
+            setChatHistory(data.history);
         });
 
-        socket.on("new_message", (message) => {
-            setChatHistory((prev) => [...prev, message]);
-        });
+        socket.on("new_message", handleNewMessage);
+
+        socket.emit("get_chat_history", {roomIndex: Number(roomIndex)});
 
         return () => {
-            socket.off("chat_started");
-            socket.off("new_message");
+            socket.off("new_message", handleNewMessage);
+            socket.off("chat_history");
         };
-    }, [socket]);
+    }, []);
+
+    useEffect(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [chatHistory]);
+
+
 
     function handleSend() {
         socket.emit("send_message", {
-            from: nickname,
-            to: recipient,
-            message: message,
+            roomIndex: roomIndex,
+            nickname: nickname,
+            message: message
         });
-
         setMessage("");
+    }
+
+    function amISender(sender: string) {
+        return nickname === sender;
     }
 
     return (
         <>
             <img src={logo} alt="logo" className={styles.logo}></img>
-            <div className="w-3/5 bg-pink-200 p-4 flex flex-col justify-between h-10/12 rounded-4xl mb-15">
+            <div className={styles.outerContainer}>
                 <div className={styles.blueBorder}>
-                        <div className={styles.innerContainer}>
-                        </div>
+                    <div className={styles.innerContainer}>
+                        {chatHistory.map((message, index) => (
+                            <div
+                                key={index}
+                                className={amISender(message.nickname) ? styles.rightContainer : styles.leftContainer}>
+                                {!amISender(message.nickname) && <Heart color="#fbcfe8" size={24} />}
+                                <div className={amISender(message.nickname) ? styles.senderMessage : styles.recipientMessage}>
+                                    <strong>{message.nickname}:</strong><br />
+                                    {message.message}
+                                </div>
+                                {amISender(message.nickname) && <Heart color="#f472b6" size={24}  />}
+                            </div>
+                        ))}
+                        <div ref={chatEndRef} />
+                    </div>
                 </div>
                 <div className={styles.enterTextField}>
-                <input
-                    className={styles.input}
-                    value={message}
-                    onChange={(event) => setMessage(event.target.value)}
-                />
+                    <input
+                        className={styles.input}
+                        value={message}
+                        onChange={(event) => setMessage(event.target.value)}
+                    />
                     <Send color="white" size={30} onClick={handleSend}></Send>
                 </div>
             </div>
