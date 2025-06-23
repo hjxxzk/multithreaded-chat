@@ -2,7 +2,6 @@
 Chat server using Flask and Socket.IO.
 """
 import threading
-import queue
 from flask import Flask, request
 from flask_socketio import SocketIO, emit, join_room, leave_room
 
@@ -22,10 +21,10 @@ class ChatThread(threading.Thread):
     Thread that handles broadcasting messages to a specific chat room,
     with manual synchronization.
     """
-    def __init__(self, thread_name, socketio: SocketIO):
+    def __init__(self, thread_name, socket: SocketIO):
         super().__init__(daemon=True)
         self.thread_name = thread_name
-        self.socketio = socketio
+        self.socketio = socket
 
         self.buffer = []
         self.lock = threading.Lock()
