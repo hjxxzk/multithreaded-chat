@@ -77,7 +77,7 @@ function Chat({socket}: SocketProps) {
                         value={message}
                         onChange={(event) => setMessage(event.target.value)}
                     />
-                    <Send color="white" size={30} onClick={handleSend}></Send>
+                    <Send color="white" size={30} onClick={handleSend} style={{ cursor: 'pointer' }}></Send>
                 </div>
             </div>
         </>

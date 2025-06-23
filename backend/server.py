@@ -19,23 +19,39 @@ chat_history = {}
 
 class ChatThread(threading.Thread):
     """
-    Thread that handles broadcasting messages to a specific chat room.
+    Thread that handles broadcasting messages to a specific chat room,
+    with manual synchronization.
     """
-    def __init__(self, thread_name):
+    def __init__(self, thread_name, socketio: SocketIO):
         super().__init__(daemon=True)
         self.thread_name = thread_name
-        self.queue = queue.Queue()
-        message_queues[thread_name] = self.queue
+        self.socketio = socketio
+
+        self.buffer = []
+        self.lock = threading.Lock()
+        self.condition = threading.Condition(self.lock)
+
+    def put_message(self, message):
+        """
+        Adds a new message to the buffer and notifies the thread that a message is available.
+        """
+        with self.condition:
+            self.buffer.append(message)
+            self.condition.notify()
 
     def run(self):
         """
-        Listens for new messages in the queue and emits them to the room.
+        Main loop of the chat thread.
+        Waits for messages and emits them to all clients in the room.
         """
         while True:
-            msg = self.queue.get()
-            if msg is None:
-                break
-            socketio.emit("new_message", msg, to=self.thread_name)
+            with self.condition:
+                while not self.buffer:
+                    self.condition.wait()
+
+                msg = self.buffer.pop(0)
+
+            self.socketio.emit("new_message", msg, to=self.thread_name)
             print(f"[{self.thread_name}] {msg['nickname']}: {msg['message']}")
 
 
@@ -58,10 +74,10 @@ def handle_send_message(data):
         chat_history[room_name] = []
     chat_history[room_name].append(message_data)
 
-    if room_name in message_queues:
-        message_queues[room_name].put(message_data)
+    if room_name in threads:
+        threads[room_name].put_message(message_data)
     else:
-        print(f"Error: Queue not found for room {room_name}")
+        print(f"Error: Thread not found for room {room_name}")
 
 
 @socketio.on("get_rooms")
@@ -92,7 +108,7 @@ def create_room():
     print(f"Created new room: {room}")
 
     if room not in threads:
-        thread = ChatThread(room)
+        thread = ChatThread(room, socketio)
         threads[room] = thread
         thread.start()
         print(f"Started thread for room: {room}")
